@@ -236,6 +236,12 @@ const createRazorpayOrder = async (amount) => {
     return razorpayInstance.orders.create(options);
 };
 
+
+const fetchUserBookings = (userId) => {
+    return Booking.find({ customerUserId: userId }).sort({ createdAt: -1 });
+};
+
+
 // --- EXPORTS ---
 module.exports = {
     registerNewUserAccount, 
@@ -253,7 +259,9 @@ module.exports = {
     fetchJobsForVendor, 
     updateBookingStatusByVendor,
     createRazorpayOrder,
-    sendBookingEmail
+    sendBookingEmail,
+    fetchUserBookings
+
 };
 
 
@@ -336,192 +344,3 @@ module.exports = {
 
 
 
-
-
-
-// const { Customer, VendorModels, Admin, ServiceModels, Booking } = require('./schema');
-// const bcrypt = require('bcryptjs');
-// const jwt = require('jsonwebtoken');
-
-// // Helper Functions
-// const getServiceModel = (cat) => ServiceModels[cat] || ServiceModels['Split AC'];
-// const getVendorModel = (cat) => VendorModels[cat] || VendorModels['AC'];
-
-// const generateUniqueId = (model, prefix) => {
-//     return model.countDocuments()
-//         .then(count => {
-//             const sequence = 1000 + count + 1;
-//             return `${prefix}-${sequence}`;
-//         });
-// };
-
-// const fetchServicesByFilter = async (category) => {
-//     if (!category) return [];
-//     const Model = getServiceModel(category);
-//     return Model.find({ serviceCategory: category, isServiceActive: true }).sort({ createdAt: -1 });
-// };
-
-// const addNewServicePackage = async (serviceData) => {
-//     const Model = getServiceModel(serviceData.serviceCategory);
-//     const newId = await generateUniqueId(Model, 'SRV');
-//     let inclusionList = serviceData['inclusions[]'] || serviceData.inclusions || [];
-//     if (typeof inclusionList === 'string') inclusionList = [inclusionList];
-
-//     return new Model({ ...serviceData, inclusions: inclusionList, customServiceId: newId }).save();
-// };
-
-// const registerNewUserAccount = (userData) => {
-//     if (!userData.userPassword) return Promise.reject(new Error('Password is required'));
-//     return Customer.findOne({ userEmail: userData.userEmail })
-//         .then(existingUser => {
-//             if (existingUser) throw new Error('Customer already exists');
-//             return Promise.all([bcrypt.hash(userData.userPassword, 10), generateUniqueId(Customer, 'CUST')]);
-//         })
-//         .then(([hashedPassword, newUserId]) => {
-//             return Customer.create({ ...userData, userPassword: hashedPassword, customUserId: newUserId, role: 'Customer' });
-//         });
-// };
-
-// const loginToUserAccount = (email, password) => {
-//     let foundUser;
-//     return Customer.findOne({ userEmail: email })
-//         .then(user => {
-//             if (!user) throw new Error('Customer not found');
-//             foundUser = user;
-//             return bcrypt.compare(password, user.userPassword);
-//         })
-//         .then(isMatch => {
-//             if (!isMatch) throw new Error('Invalid Credentials');
-//             const accessToken = jwt.sign({ id: foundUser._id, role: 'Customer' }, process.env.JWT_SECRET, { expiresIn: '24h' });
-//             return { token: accessToken, user: { id: foundUser.customUserId, _id: foundUser._id, name: foundUser.userFullName, role: 'Customer' } };
-//         });
-// };
-
-// const registerVendorAccount = (vendorData) => {
-//     const Model = getVendorModel(vendorData.vendorCategory);
-//     return Model.findOne({ $or: [{ userEmail: vendorData.userEmail }, { aadharNumber: vendorData.aadharNumber }] })
-//         .then(existing => {
-//             if (existing) throw new Error('Vendor already exists');
-//             return Promise.all([bcrypt.hash(vendorData.userPassword, 10), generateUniqueId(Model, 'VND')]);
-//         })
-//         .then(([hashedPassword, newVndId]) => {
-//             const fullName = `${vendorData.firstName} ${vendorData.lastName}`;
-//             const fullAddress = `${vendorData.vendorStreet}, ${vendorData.vendorCity}, ${vendorData.vendorState} - ${vendorData.vendorPincode}`;
-//             return Model.create({ ...vendorData, userFullName: fullName, vendorAddress: fullAddress, userPassword: hashedPassword, customUserId: newVndId, role: 'Vendor', isOnline: false, walletBalance: 0 });
-//         });
-// };
-
-// const loginToVendorAccount = async (email, password) => {
-//     let foundVendor = null;
-//     let TargetModel = null;
-
-//     // Sabhi vendor categories mein search karein
-//     for (let cat in VendorModels) {
-//         // Dhayan dein field ka naam 'userEmail' hai
-//         foundVendor = await VendorModels[cat].findOne({ userEmail: email });
-//         if (foundVendor) { 
-//             TargetModel = VendorModels[cat]; 
-//             break; 
-//         }
-//     }
-
-//     if (!foundVendor) throw new Error('Vendor account not found');
-
-//     // Password comparison
-//     const isMatch = await bcrypt.compare(password, foundVendor.userPassword);
-//     if (!isMatch) throw new Error('Invalid Credentials');
-
-//     // Status update
-//     const updatedVendor = await TargetModel.findByIdAndUpdate(
-//         foundVendor._id, 
-//         { isOnline: true }, 
-//         { new: true }
-//     );
-
-//     const accessToken = jwt.sign(
-//         { id: updatedVendor._id, role: 'Vendor', category: updatedVendor.vendorCategory }, 
-//         process.env.JWT_SECRET, 
-//         { expiresIn: '24h' }
-//     );
-
-//     return { 
-//         success: true, 
-//         token: accessToken, 
-//         user: { 
-//             id: updatedVendor.customUserId, 
-//             name: updatedVendor.userFullName, 
-//             role: 'Vendor' 
-//         } 
-//     };
-// };
-
-// const registerAdminAccount = (adminData) => {
-//     return Admin.findOne({ userEmail: adminData.userEmail })
-//         .then(existing => {
-//             if (existing) throw new Error('Admin exists');
-//             return Promise.all([bcrypt.hash(adminData.userPassword, 10), generateUniqueId(Admin, 'ADM')]);
-//         }).then(([hashedPassword, newAdmId]) => {
-//             return Admin.create({ ...adminData, userPassword: hashedPassword, customUserId: newAdmId, role: 'Admin' });
-//         });
-// };
-
-// const loginToAdminAccount = (email, password) => {
-//     let foundAdmin;
-//     return Admin.findOne({ userEmail: email })
-//         .then(admin => {
-//             if (!admin) throw new Error('Admin access denied');
-//             foundAdmin = admin;
-//             return bcrypt.compare(password, admin.userPassword);
-//         })
-//         .then(isMatch => {
-//             if (!isMatch) throw new Error('Invalid Credentials');
-//             const accessToken = jwt.sign({ id: foundAdmin._id, role: 'Admin' }, process.env.JWT_SECRET, { expiresIn: '24h' });
-//             return { token: accessToken, user: { id: foundAdmin.customUserId, name: foundAdmin.userFullName, role: 'Admin' } };
-//         });
-// };
-
-// const createNewBookingEntry = async (bookingData) => {
-//     const newBookingId = await generateUniqueId(Booking, 'GS');
-//     return new Booking({ ...bookingData, customBookingId: newBookingId }).save();
-// };
-
-// const calculateAdminDashboardStats = () => {
-//     return Booking.find().then(async (allBookings) => {
-//         const revenue = allBookings.filter(b => b.bookingStatus === 'Completed').reduce((sum, b) => sum + b.totalPrice, 0);
-//         let totalVendors = 0;
-//         for(let cat in VendorModels) { totalVendors += await VendorModels[cat].countDocuments({ isVerified: true }); }
-//         return Promise.all([revenue, Booking.countDocuments({ bookingStatus: { $ne: 'Cancelled' } }), Customer.countDocuments(), totalVendors, Booking.find().sort({ createdAt: -1 }).limit(10).populate('customerUserId', 'userFullName')]);
-//     }).then(([revenue, active, customers, verifiedTechs, recent]) => ({ totalRevenue: `₹${revenue.toLocaleString()}`, activeBookingsCount: active, totalUsersCount: customers, verifiedTechsCount: verifiedTechs, recentBookingsList: recent }));
-// };
-
-// const fetchJobsForVendor = (vendorId) => {
-//     return Booking.find({ $or: [{ assignedVendorId: vendorId, bookingStatus: { $ne: 'Completed' } }, { assignedVendorId: null, bookingStatus: 'Pending' }] }).sort({ createdAt: -1 });
-// };
-
-// const updateBookingStatusByVendor = (bookingId, updateData) => {
-//     return Booking.findOneAndUpdate({ customBookingId: bookingId }, { $set: updateData }, { new: true })
-//         .then(async (updatedBooking) => {
-//             if(updatedBooking.bookingStatus === 'Completed' && updatedBooking.assignedVendorId) {
-//                 for(let cat in VendorModels) {
-//                     await VendorModels[cat].findOneAndUpdate({ customUserId: updatedBooking.assignedVendorId }, { $inc: { walletBalance: updatedBooking.totalPrice } });
-//                 }
-//             }
-//             return updatedBooking;
-//         });
-// };
-
-// const fetchFullVendorProfile = async (vendorId) => {
-//     for(let cat in VendorModels) {
-//         const vendor = await VendorModels[cat].findOne({ customUserId: vendorId }).select('-userPassword');
-//         if(vendor) return vendor;
-//     }
-//     return null;
-// };
-
-// const fetchVendorWorkHistory = (vendorId) => {
-//     return Booking.find({ assignedVendorId: vendorId, bookingStatus: 'Completed' }).sort({ updatedAt: -1 });
-// };
-
-// module.exports = {
-//     registerNewUserAccount, loginToUserAccount, registerVendorAccount, loginToVendorAccount, fetchFullVendorProfile, fetchVendorWorkHistory, registerAdminAccount, loginToAdminAccount, addNewServicePackage, fetchServicesByFilter, createNewBookingEntry, calculateAdminDashboardStats, fetchJobsForVendor, updateBookingStatusByVendor
-// };

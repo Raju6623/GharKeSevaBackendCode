@@ -59,6 +59,8 @@ router.post('/bookings/create', controller.handleCreateBooking);
 // --- PAYMENT ROUTES ---
 router.post('/payments/create-order', controller.handleCreateRazorpayOrder);
 
+router.get('/bookings/user/:userId', controller.handleFetchUserBookings);
+
 module.exports = router;
 
 
@@ -85,73 +87,3 @@ module.exports = router;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// const express = require('express');
-// const router = express.Router();
-// const controller = require("./controller");
-// const multer = require('multer');
-
-// const storage = multer.diskStorage({
-//     destination: (req, file, cb) => { cb(null, 'uploads/'); },
-//     filename: (req, file, cb) => { cb(null, Date.now() + '-' + file.originalname); }
-// });
-
-// const upload = multer({ storage: storage });
-
-// // AUTH & GENERAL ROUTES
-// router.post('/register', controller.handleUserRegistration);
-// router.post('/login', controller.handleUserLogin);
-// router.post('/admin/register', controller.handleAdminRegistration);
-// router.post('/admin/login', controller.handleAdminLogin);
-
-// // VENDOR ROUTES
-// router.post('/vendor/register', upload.single('vendorPhoto'), controller.handleVendorRegistration);
-// router.post('/vendor/login', controller.handleVendorLogin); 
-// router.post('/vendor/logout', controller.handleVendorLogout);
-// router.get('/vendor/jobs/:vendorId', controller.handleFetchVendorJobs);
-// router.put('/vendor/update-job/:bookingId', controller.handleVendorUpdateAction);
-// router.get('/vendor/profile/:vendorId', controller.handleFetchFullVendorProfile);
-// router.get('/vendor/history/:vendorId', controller.handleFetchVendorHistory);
-
-// // ADMIN SPECIFIC VENDOR MANAGEMENT
-// router.get('/admin/vendors', controller.handleFetchAllVendors);
-
-// // SERVICE & BOOKING ROUTES
-// router.get('/services', controller.handleFetchServices);
-// router.post('/admin/services/add', upload.single('packageImage'), controller.handleCreateService);
-// router.post('/bookings/create', controller.handleCreateBooking);
-// router.get('/admin/stats', controller.handleGetAdminStats);
-
-// module.exports = router;
